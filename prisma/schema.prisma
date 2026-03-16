@@ -1,0 +1,43 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [pgvector(map: "vector")]
+}
+
+model Content {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  imageUrl     String?
+  body         String
+  systemPrompt String?
+  isProcessed  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  chunks Chunk[]
+
+  @@map("contents")
+}
+
+model Chunk {
+  id         String                       @id @default(cuid())
+  contentId  String
+  content    String
+  chunkIndex Int
+  tokenCount Int
+  metadata   Json                         @default("{}")
+  embedding  Unsupported("vector(768)")?
+
+  contentRef Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([contentId])
+  @@map("chunks")
+}
